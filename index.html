@@ -31,6 +31,19 @@ body {
   color: var(--ink);
   direction: rtl;
 }
+body[data-page="viewer"] {
+  font-family: "Times New Roman", Times, serif;
+  word-spacing: 2px;
+}
+body[data-page="viewer"] input,
+body[data-page="viewer"] select,
+body[data-page="viewer"] button {
+  font-family: "Times New Roman", Times, serif;
+}
+body[data-page="viewer"] .query-card {
+  line-height: 1.9;
+}
+
 .hidden { display: none !important; }
 h1, h2, h3, p { margin-top: 0; }
 h1 { font-size: clamp(24px, 4vw, 38px); margin-bottom: 10px; }
@@ -135,6 +148,9 @@ button:hover, .link-btn:hover { transform: translateY(-1px); }
 .check-row { display: flex; align-items: center; gap: 9px; font-weight: 700; }
 .check-row input { width: auto; }
 .progress-box, .mini-list { margin-top: 16px; background: #f8fafc; border: 1px solid var(--line); border-radius: 16px; padding: 14px; min-height: 58px; white-space: pre-wrap; line-height: 1.7; color: #475467; }
+.mini-section { margin-top: 18px; }
+.upload-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin: 10px 0; }
+.small-btn { padding: 9px 12px; border-radius: 10px; font-size: 12px; }
 .actions-stack { display: grid; gap: 10px; }
 .public-link-box { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
 .gold-marquee {
@@ -174,8 +190,10 @@ button:hover, .link-btn:hover { transform: translateY(-1px); }
   padding: 9pt 11pt;
   box-shadow: 0 18px 38px rgba(15,23,42,.16);
   color: #111827;
-  font-family: "Tahoma", "Arial", sans-serif;
+  font-family: "Times New Roman", Times, serif;
   position: relative;
+  word-spacing: 1.1px;
+  line-height: 1.22;
 }
 .certificate.basic { border-color: #0f766e; }
 .certificate.middle { border-color: #1d4ed8; }
@@ -187,15 +205,15 @@ button:hover, .link-btn:hover { transform: translateY(-1px); }
 .cert-title h2 { margin: 0 0 1.5pt; font-size: 13pt; color: #2d2410; }
 .cert-title p { margin: 0; font-size: 6.6pt; color: #3b3321; line-height: 1.35; }
 .cert-title strong { display: block; margin-top: 2pt; font-size: 8.5pt; color: #8a6416; }
-.student-line { display: grid; grid-template-columns: 1.35fr .8fr .8fr; gap: 4pt; margin: 5pt 0; }
-.info-box { background: #fff; border: .6pt solid #d8cda7; border-radius: 4pt; padding: 3pt 5pt; min-height: 23pt; }
+.student-line { display: grid; grid-template-columns: 1.45fr .72fr .83fr; gap: 4pt; margin: 5pt 0; }
+.info-box { background: #fff; border: .75pt solid #c7b36d; border-radius: 4pt; padding: 3pt 5pt; min-height: 23pt; overflow: hidden; }
 .info-box span { display: block; color: #6b7280; font-size: 5.8pt; margin-bottom: 1pt; }
-.info-box strong { display: block; font-size: 7.3pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.info-box strong { display: block; font-size: 7.1pt; white-space: normal; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
 .subjects-horizontal { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 3pt 0; font-size: 5.2pt; }
-.subjects-horizontal th, .subjects-horizontal td { border: .55pt solid #7d6a36; text-align: center; padding: 2pt 1pt; vertical-align: middle; }
+.subjects-horizontal th, .subjects-horizontal td { border: .65pt solid #6e5a24; text-align: center; padding: 2pt 1pt; vertical-align: middle; }
 .subjects-horizontal th { background: #f3e5b3; color: #241a06; font-weight: 900; }
-.subjects-horizontal .label-cell { background: #8a6416; color: #fff; width: 34pt; font-weight: 900; }
-.subjects-horizontal .subject-cell { font-weight: 800; line-height: 1.25; height: 20pt; }
+.subjects-horizontal .label-cell { background: #8a6416; color: #fff; width: 36pt; font-weight: 900; text-decoration: underline; text-underline-offset: 2pt; border-left: 1.1pt solid #3b2a08 !important; border-right: 1.1pt solid #3b2a08 !important; }
+.subjects-horizontal .subject-cell { font-weight: 800; line-height: 1.25; height: 20pt; word-break: keep-all; }
 .subjects-horizontal .score-cell { font-size: 7pt; font-weight: 900; }
 .final-strip { display: grid; grid-template-columns: .8fr .8fr 1fr; gap: 4pt; margin-top: 4pt; }
 .final-box { border: .8pt solid #d8cda7; background: #fff; border-radius: 4pt; padding: 3pt; text-align: center; }
@@ -211,7 +229,7 @@ button:hover, .link-btn:hover { transform: translateY(-1px); }
 .cert-footer-note { position: absolute; bottom: 4pt; left: 8pt; right: 8pt; text-align: center; font-size: 4.7pt; color: #8a6416; }
 .custom-template { padding: 0; }
 @media (max-width: 760px) {
-  .grid.two, .stats-grid, .form-grid, .asset-grid { grid-template-columns: 1fr; }
+  .grid.two, .stats-grid, .form-grid, .asset-grid, .upload-row { grid-template-columns: 1fr; }
   .topbar { flex-direction: column; align-items: stretch; }
   .luxury-panel, .panel { padding: 22px; }
   .certificate { transform-origin: top center; }
@@ -305,11 +323,11 @@ button:hover, .link-btn:hover { transform: translateY(-1px); }
       <div class="panel">
         <div class="section-title"><h2>رفع ملف Excel للنتائج</h2><span>يدعم K1 إلى K12</span></div>
         <label class="dropzone">
-          <input id="excelFile" type="file" accept=".xlsx,.xls" />
-          <span>اضغط هنا لاختيار ملف Excel أو اسحب الملف إلى هذه المنطقة</span>
+          <input id="excelFile" type="file" accept=".xlsx,.xls" multiple />
+          <span>اضغط هنا لاختيار ملف أو عدة ملفات Excel، أو اسحبها إلى هذه المنطقة</span>
         </label>
-        <label class="check-row"><input id="replaceAll" type="checkbox" checked /> حذف النتائج القديمة قبل رفع الملف الجديد</label>
-        <button class="primary" type="button" onclick="uploadExcelResults()">رفع وتحليل ملف Excel</button>
+        <label class="check-row"><input id="replaceAll" type="checkbox" checked /> استبدال كامل قاعدة البيانات قبل رفع الملفات الجديدة</label>
+        <button class="primary" type="button" onclick="uploadExcelResults()">رفع وتحليل ملفات Excel</button>
         <div id="uploadProgress" class="progress-box">جاهز لرفع ملف النتائج.</div>
       </div>
 
@@ -330,7 +348,8 @@ button:hover, .link-btn:hover { transform: translateY(-1px); }
         <div class="section-title"><h2>إدارة البيانات</h2><span>حذف وتحديث</span></div>
         <div class="actions-stack">
           <button class="danger" type="button" onclick="deleteAllResults()">حذف جميع نتائج الطلاب</button>
-          <button class="secondary" type="button" onclick="refreshDashboard()">تحديث الإحصائيات</button>
+          <button class="secondary" type="button" onclick="refreshDashboard(); loadRecentUploads();">تحديث الإحصائيات وسجل الملفات</button>
+          <button class="secondary" type="button" onclick="clearUploadsLogOnly()">حذف سجل ملفات Excel فقط</button>
         </div>
       </div>
       <div class="panel">
@@ -340,7 +359,8 @@ button:hover, .link-btn:hover { transform: translateY(-1px); }
           <input id="publicLink" type="text" readonly />
           <button class="secondary" type="button" onclick="copyPublicLink()">نسخ</button>
         </div>
-        <div id="recentUploads" class="mini-list">لا توجد عمليات رفع محفوظة بعد.</div>
+        <div class="section-title mini-section"><h2>إدارة ملفات Excel المرفوعة</h2><span>حذف دفعة محددة</span></div>
+        <div id="recentUploads" class="mini-list">لا توجد ملفات Excel محفوظة بعد.</div>
       </div>
     </section>
   </main>
@@ -772,46 +792,84 @@ function calculateStatus(subjects) {
 async function uploadExcelResults() {
   const input = document.getElementById("excelFile");
   const progress = document.getElementById("uploadProgress");
-  const file = input?.files?.[0];
+  const files = Array.from(input?.files || []);
+
   if (!sbClient) { progress.textContent = "أضف Supabase URL و anon public key داخل script.js أولًا."; return; }
-  if (!file) { progress.textContent = "اختر ملف Excel أولًا."; return; }
+  if (!files.length) { progress.textContent = "اختر ملف Excel واحدًا على الأقل."; return; }
+
+  const invalid = files.find(file => !/\.(xlsx|xls)$/i.test(file.name));
+  if (invalid) { progress.textContent = "الملف غير مدعوم: " + invalid.name + " — يجب أن يكون Excel بصيغة xlsx أو xls."; return; }
+
   try {
-    progress.textContent = "جاري قراءة ملف Excel...";
-    const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: "array", cellDates: false, raw: true });
-    const extractedSchool = parseSchoolInfoFromWorkbook(workbook);
-    const settings = Object.assign({}, cachedSettings || DEFAULT_SETTINGS, extractedSchool);
-    cachedSettings = settings;
-    fillSettingsForm(settings);
-    const batchId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-    let records = [];
-    workbook.SheetNames.forEach(function (sheetName) {
-      if (/^K\d+$/i.test(sheetName)) {
-        const sheetRecords = extractStudentsFromSheet(workbook, sheetName.toUpperCase(), settings);
-        records = records.concat(sheetRecords.map(r => Object.assign({ batch_id: batchId }, r)));
-      }
-    });
-    if (!records.length) { progress.textContent = "لم يتم العثور على بيانات طلاب داخل أوراق K1 إلى K12."; return; }
-    progress.textContent = "تم استخراج " + records.length + " طالب. جاري الحفظ في Supabase...";
+    let grandTotal = 0;
+    let processedFiles = 0;
+
     if (document.getElementById("replaceAll")?.checked) {
-      const del = await sbClient.from(TABLE_RESULTS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      if (del.error) throw del.error;
+      progress.textContent = "جاري حذف النتائج وسجل ملفات Excel القديمة قبل الرفع الجديد...";
+      const delResults = await sbClient.from(TABLE_RESULTS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (delResults.error) throw delResults.error;
+      const delUploads = await sbClient.from(TABLE_UPLOADS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (delUploads.error) throw delUploads.error;
     }
-    await saveSchoolSettingsFromObject(settings);
-    const chunkSize = 400;
-    for (let i = 0; i < records.length; i += chunkSize) {
-      const chunk = records.slice(i, i + chunkSize);
-      const insert = await sbClient.from(TABLE_RESULTS).insert(chunk);
-      if (insert.error) throw insert.error;
-      progress.textContent = "جاري الحفظ... " + Math.min(i + chunk.length, records.length) + " / " + records.length;
+
+    for (const file of files) {
+      processedFiles += 1;
+      progress.textContent = "جاري قراءة ملف Excel " + processedFiles + " من " + files.length + ": " + file.name;
+
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array", cellDates: false, raw: true });
+      const extractedSchool = parseSchoolInfoFromWorkbook(workbook);
+      const settings = Object.assign({}, cachedSettings || DEFAULT_SETTINGS, extractedSchool);
+      cachedSettings = settings;
+      fillSettingsForm(settings);
+
+      const batchId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(36).slice(2);
+      let records = [];
+
+      workbook.SheetNames.forEach(function (sheetName) {
+        if (/^K\d+$/i.test(sheetName)) {
+          const sheetRecords = extractStudentsFromSheet(workbook, sheetName.toUpperCase(), settings);
+          records = records.concat(sheetRecords.map(r => Object.assign({ batch_id: batchId }, r)));
+        }
+      });
+
+      if (!records.length) {
+        progress.textContent = "لم يتم العثور على بيانات طلاب داخل الملف: " + file.name + " — سيتم الانتقال للملف التالي إن وجد.";
+        continue;
+      }
+
+      await saveSchoolSettingsFromObject(settings);
+      const chunkSize = 400;
+      for (let i = 0; i < records.length; i += chunkSize) {
+        const chunk = records.slice(i, i + chunkSize);
+        const insert = await sbClient.from(TABLE_RESULTS).insert(chunk);
+        if (insert.error) throw insert.error;
+        progress.textContent = "جاري حفظ " + file.name + " ... " + Math.min(i + chunk.length, records.length) + " / " + records.length;
+      }
+
+      const summary = summarizeRecords(records);
+      const logInsert = await sbClient.from(TABLE_UPLOADS).insert({
+        batch_id: batchId,
+        file_name: file.name,
+        total_records: records.length,
+        grades_count: summary.grades,
+        pass_count: summary.pass,
+        fail_count: summary.fail,
+        uploaded_at: new Date().toISOString()
+      });
+      if (logInsert.error) throw logInsert.error;
+
+      grandTotal += records.length;
     }
-    const summary = summarizeRecords(records);
-    await sbClient.from(TABLE_UPLOADS).insert({ batch_id: batchId, file_name: file.name, total_records: records.length, grades_count: summary.grades, pass_count: summary.pass, fail_count: summary.fail, uploaded_at: new Date().toISOString() });
-    progress.textContent = "تم رفع النتائج بنجاح. الطلاب: " + records.length + "، الصفوف: " + summary.grades + ".";
+
     input.value = "";
+    progress.textContent = "تم الانتهاء من رفع " + processedFiles + " ملف/ملفات Excel. إجمالي الطلاب المحفوظين: " + grandTotal + ".";
     await refreshDashboard();
     await loadRecentUploads();
-  } catch (error) { console.error(error); progress.textContent = "حدث خطأ أثناء رفع النتائج: " + error.message; }
+  } catch (error) {
+    console.error(error);
+    progress.textContent = "حدث خطأ أثناء رفع النتائج: " + error.message;
+  }
 }
 
 function summarizeRecords(records) {
@@ -840,17 +898,66 @@ async function refreshDashboard() {
 async function loadRecentUploads() {
   const box = document.getElementById("recentUploads");
   if (!box || !sbClient) return;
-  const result = await sbClient.from(TABLE_UPLOADS).select("*").order("uploaded_at", { ascending: false }).limit(5);
-  if (result.error) { box.textContent = "تعذر تحميل سجل الرفع: " + result.error.message; return; }
-  if (!result.data || result.data.length === 0) { box.textContent = "لا توجد عمليات رفع محفوظة بعد."; return; }
-  box.innerHTML = result.data.map(item => `<div class="match-card"><div><strong>${escapeHtml(item.file_name)}</strong><br><small>${formatDate(item.uploaded_at)} - ${item.total_records} طالب</small></div><span>${item.grades_count || 0} صفوف</span></div>`).join("");
+
+  const result = await sbClient
+    .from(TABLE_UPLOADS)
+    .select("*")
+    .order("uploaded_at", { ascending: false })
+    .limit(30);
+
+  if (result.error) { box.textContent = "تعذر تحميل سجل ملفات Excel: " + result.error.message; return; }
+  if (!result.data || result.data.length === 0) { box.textContent = "لا توجد ملفات Excel محفوظة في سجل الرفع بعد."; return; }
+
+  box.innerHTML = result.data.map(item => `
+    <div class="upload-row">
+      <div>
+        <strong>${escapeHtml(item.file_name || "ملف Excel")}</strong>
+        <br>
+        <small>${formatDate(item.uploaded_at)} - ${item.total_records || 0} طالب - ${item.grades_count || 0} صفوف</small>
+      </div>
+      <button class="danger small-btn" type="button" onclick="deleteUploadBatch('${escapeAttr(item.id || "")}', '${escapeAttr(item.batch_id || "")}')">حذف هذا الملف</button>
+    </div>
+  `).join("");
 }
+
+async function deleteUploadBatch(uploadId, batchId) {
+  if (!sbClient) return;
+  if (!batchId) { alert("لا يوجد رقم دفعة مرتبط بهذا الملف."); return; }
+  if (!confirm("سيتم حذف بيانات الطلاب المرتبطة بهذا ملف Excel من قاعدة البيانات، هل تريد المتابعة؟")) return;
+
+  const delRows = await sbClient.from(TABLE_RESULTS).delete().eq("batch_id", batchId);
+  if (delRows.error) { alert("تعذر حذف نتائج هذا الملف: " + delRows.error.message); return; }
+
+  let delLog;
+  if (uploadId) {
+    delLog = await sbClient.from(TABLE_UPLOADS).delete().eq("id", uploadId);
+  } else {
+    delLog = await sbClient.from(TABLE_UPLOADS).delete().eq("batch_id", batchId);
+  }
+  if (delLog.error) { alert("تم حذف النتائج، لكن تعذر حذف سجل ملف Excel: " + delLog.error.message); return; }
+
+  alert("تم حذف ملف Excel وبياناته المرتبطة من النظام.");
+  await refreshDashboard();
+  await loadRecentUploads();
+}
+
+async function clearUploadsLogOnly() {
+  if (!sbClient) return;
+  if (!confirm("هل تريد حذف سجل ملفات Excel فقط؟ لن يتم حذف نتائج الطلاب.")) return;
+  const result = await sbClient.from(TABLE_UPLOADS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  if (result.error) { alert("تعذر حذف سجل ملفات Excel: " + result.error.message); return; }
+  alert("تم حذف سجل ملفات Excel.");
+  await loadRecentUploads();
+}
+
 async function deleteAllResults() {
   if (!sbClient) return;
   if (!confirm("هل تريد حذف جميع نتائج الطلاب من قاعدة البيانات؟")) return;
   const result = await sbClient.from(TABLE_RESULTS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
   if (result.error) { alert("تعذر الحذف: " + result.error.message); return; }
-  alert("تم حذف النتائج."); refreshDashboard();
+  alert("تم حذف النتائج.");
+  await refreshDashboard();
+  await loadRecentUploads();
 }
 async function loadTemplateFileToTextarea() {
   const input = document.getElementById("templateFile");

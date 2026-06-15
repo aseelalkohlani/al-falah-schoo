@@ -425,46 +425,84 @@ function calculateStatus(subjects) {
 async function uploadExcelResults() {
   const input = document.getElementById("excelFile");
   const progress = document.getElementById("uploadProgress");
-  const file = input?.files?.[0];
+  const files = Array.from(input?.files || []);
+
   if (!sbClient) { progress.textContent = "أضف Supabase URL و anon public key داخل script.js أولًا."; return; }
-  if (!file) { progress.textContent = "اختر ملف Excel أولًا."; return; }
+  if (!files.length) { progress.textContent = "اختر ملف Excel واحدًا على الأقل."; return; }
+
+  const invalid = files.find(file => !/\.(xlsx|xls)$/i.test(file.name));
+  if (invalid) { progress.textContent = "الملف غير مدعوم: " + invalid.name + " — يجب أن يكون Excel بصيغة xlsx أو xls."; return; }
+
   try {
-    progress.textContent = "جاري قراءة ملف Excel...";
-    const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: "array", cellDates: false, raw: true });
-    const extractedSchool = parseSchoolInfoFromWorkbook(workbook);
-    const settings = Object.assign({}, cachedSettings || DEFAULT_SETTINGS, extractedSchool);
-    cachedSettings = settings;
-    fillSettingsForm(settings);
-    const batchId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-    let records = [];
-    workbook.SheetNames.forEach(function (sheetName) {
-      if (/^K\d+$/i.test(sheetName)) {
-        const sheetRecords = extractStudentsFromSheet(workbook, sheetName.toUpperCase(), settings);
-        records = records.concat(sheetRecords.map(r => Object.assign({ batch_id: batchId }, r)));
-      }
-    });
-    if (!records.length) { progress.textContent = "لم يتم العثور على بيانات طلاب داخل أوراق K1 إلى K12."; return; }
-    progress.textContent = "تم استخراج " + records.length + " طالب. جاري الحفظ في Supabase...";
+    let grandTotal = 0;
+    let processedFiles = 0;
+
     if (document.getElementById("replaceAll")?.checked) {
-      const del = await sbClient.from(TABLE_RESULTS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      if (del.error) throw del.error;
+      progress.textContent = "جاري حذف النتائج وسجل ملفات Excel القديمة قبل الرفع الجديد...";
+      const delResults = await sbClient.from(TABLE_RESULTS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (delResults.error) throw delResults.error;
+      const delUploads = await sbClient.from(TABLE_UPLOADS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (delUploads.error) throw delUploads.error;
     }
-    await saveSchoolSettingsFromObject(settings);
-    const chunkSize = 400;
-    for (let i = 0; i < records.length; i += chunkSize) {
-      const chunk = records.slice(i, i + chunkSize);
-      const insert = await sbClient.from(TABLE_RESULTS).insert(chunk);
-      if (insert.error) throw insert.error;
-      progress.textContent = "جاري الحفظ... " + Math.min(i + chunk.length, records.length) + " / " + records.length;
+
+    for (const file of files) {
+      processedFiles += 1;
+      progress.textContent = "جاري قراءة ملف Excel " + processedFiles + " من " + files.length + ": " + file.name;
+
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array", cellDates: false, raw: true });
+      const extractedSchool = parseSchoolInfoFromWorkbook(workbook);
+      const settings = Object.assign({}, cachedSettings || DEFAULT_SETTINGS, extractedSchool);
+      cachedSettings = settings;
+      fillSettingsForm(settings);
+
+      const batchId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(36).slice(2);
+      let records = [];
+
+      workbook.SheetNames.forEach(function (sheetName) {
+        if (/^K\d+$/i.test(sheetName)) {
+          const sheetRecords = extractStudentsFromSheet(workbook, sheetName.toUpperCase(), settings);
+          records = records.concat(sheetRecords.map(r => Object.assign({ batch_id: batchId }, r)));
+        }
+      });
+
+      if (!records.length) {
+        progress.textContent = "لم يتم العثور على بيانات طلاب داخل الملف: " + file.name + " — سيتم الانتقال للملف التالي إن وجد.";
+        continue;
+      }
+
+      await saveSchoolSettingsFromObject(settings);
+      const chunkSize = 400;
+      for (let i = 0; i < records.length; i += chunkSize) {
+        const chunk = records.slice(i, i + chunkSize);
+        const insert = await sbClient.from(TABLE_RESULTS).insert(chunk);
+        if (insert.error) throw insert.error;
+        progress.textContent = "جاري حفظ " + file.name + " ... " + Math.min(i + chunk.length, records.length) + " / " + records.length;
+      }
+
+      const summary = summarizeRecords(records);
+      const logInsert = await sbClient.from(TABLE_UPLOADS).insert({
+        batch_id: batchId,
+        file_name: file.name,
+        total_records: records.length,
+        grades_count: summary.grades,
+        pass_count: summary.pass,
+        fail_count: summary.fail,
+        uploaded_at: new Date().toISOString()
+      });
+      if (logInsert.error) throw logInsert.error;
+
+      grandTotal += records.length;
     }
-    const summary = summarizeRecords(records);
-    await sbClient.from(TABLE_UPLOADS).insert({ batch_id: batchId, file_name: file.name, total_records: records.length, grades_count: summary.grades, pass_count: summary.pass, fail_count: summary.fail, uploaded_at: new Date().toISOString() });
-    progress.textContent = "تم رفع النتائج بنجاح. الطلاب: " + records.length + "، الصفوف: " + summary.grades + ".";
+
     input.value = "";
+    progress.textContent = "تم الانتهاء من رفع " + processedFiles + " ملف/ملفات Excel. إجمالي الطلاب المحفوظين: " + grandTotal + ".";
     await refreshDashboard();
     await loadRecentUploads();
-  } catch (error) { console.error(error); progress.textContent = "حدث خطأ أثناء رفع النتائج: " + error.message; }
+  } catch (error) {
+    console.error(error);
+    progress.textContent = "حدث خطأ أثناء رفع النتائج: " + error.message;
+  }
 }
 
 function summarizeRecords(records) {
@@ -493,17 +531,66 @@ async function refreshDashboard() {
 async function loadRecentUploads() {
   const box = document.getElementById("recentUploads");
   if (!box || !sbClient) return;
-  const result = await sbClient.from(TABLE_UPLOADS).select("*").order("uploaded_at", { ascending: false }).limit(5);
-  if (result.error) { box.textContent = "تعذر تحميل سجل الرفع: " + result.error.message; return; }
-  if (!result.data || result.data.length === 0) { box.textContent = "لا توجد عمليات رفع محفوظة بعد."; return; }
-  box.innerHTML = result.data.map(item => `<div class="match-card"><div><strong>${escapeHtml(item.file_name)}</strong><br><small>${formatDate(item.uploaded_at)} - ${item.total_records} طالب</small></div><span>${item.grades_count || 0} صفوف</span></div>`).join("");
+
+  const result = await sbClient
+    .from(TABLE_UPLOADS)
+    .select("*")
+    .order("uploaded_at", { ascending: false })
+    .limit(30);
+
+  if (result.error) { box.textContent = "تعذر تحميل سجل ملفات Excel: " + result.error.message; return; }
+  if (!result.data || result.data.length === 0) { box.textContent = "لا توجد ملفات Excel محفوظة في سجل الرفع بعد."; return; }
+
+  box.innerHTML = result.data.map(item => `
+    <div class="upload-row">
+      <div>
+        <strong>${escapeHtml(item.file_name || "ملف Excel")}</strong>
+        <br>
+        <small>${formatDate(item.uploaded_at)} - ${item.total_records || 0} طالب - ${item.grades_count || 0} صفوف</small>
+      </div>
+      <button class="danger small-btn" type="button" onclick="deleteUploadBatch('${escapeAttr(item.id || "")}', '${escapeAttr(item.batch_id || "")}')">حذف هذا الملف</button>
+    </div>
+  `).join("");
 }
+
+async function deleteUploadBatch(uploadId, batchId) {
+  if (!sbClient) return;
+  if (!batchId) { alert("لا يوجد رقم دفعة مرتبط بهذا الملف."); return; }
+  if (!confirm("سيتم حذف بيانات الطلاب المرتبطة بهذا ملف Excel من قاعدة البيانات، هل تريد المتابعة؟")) return;
+
+  const delRows = await sbClient.from(TABLE_RESULTS).delete().eq("batch_id", batchId);
+  if (delRows.error) { alert("تعذر حذف نتائج هذا الملف: " + delRows.error.message); return; }
+
+  let delLog;
+  if (uploadId) {
+    delLog = await sbClient.from(TABLE_UPLOADS).delete().eq("id", uploadId);
+  } else {
+    delLog = await sbClient.from(TABLE_UPLOADS).delete().eq("batch_id", batchId);
+  }
+  if (delLog.error) { alert("تم حذف النتائج، لكن تعذر حذف سجل ملف Excel: " + delLog.error.message); return; }
+
+  alert("تم حذف ملف Excel وبياناته المرتبطة من النظام.");
+  await refreshDashboard();
+  await loadRecentUploads();
+}
+
+async function clearUploadsLogOnly() {
+  if (!sbClient) return;
+  if (!confirm("هل تريد حذف سجل ملفات Excel فقط؟ لن يتم حذف نتائج الطلاب.")) return;
+  const result = await sbClient.from(TABLE_UPLOADS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  if (result.error) { alert("تعذر حذف سجل ملفات Excel: " + result.error.message); return; }
+  alert("تم حذف سجل ملفات Excel.");
+  await loadRecentUploads();
+}
+
 async function deleteAllResults() {
   if (!sbClient) return;
   if (!confirm("هل تريد حذف جميع نتائج الطلاب من قاعدة البيانات؟")) return;
   const result = await sbClient.from(TABLE_RESULTS).delete().neq("id", "00000000-0000-0000-0000-000000000000");
   if (result.error) { alert("تعذر الحذف: " + result.error.message); return; }
-  alert("تم حذف النتائج."); refreshDashboard();
+  alert("تم حذف النتائج.");
+  await refreshDashboard();
+  await loadRecentUploads();
 }
 async function loadTemplateFileToTextarea() {
   const input = document.getElementById("templateFile");

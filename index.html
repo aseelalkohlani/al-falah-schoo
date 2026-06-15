@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>منصة إدارة نتائج الطلاب</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body data-page="admin">
+  <section id="loginPage" class="login-page">
+    <div class="login-card luxury-panel">
+      <div class="brand-mark">نتائج</div>
+      <h1>منصة إدارة نتائج الطلاب</h1>
+      <p class="muted">لوحة خاصة لإدارة نتائج الطلاب ورفع ملفات Excel والتحكم في نماذج الشهادات والشعارات والتواقيع.</p>
+
+      <label for="username">اسم المستخدم</label>
+      <input id="username" type="text" autocomplete="username" placeholder="أدخل اسم المستخدم" />
+
+      <label for="password">كلمة المرور</label>
+      <div class="password-wrap">
+        <input id="password" type="password" autocomplete="current-password" placeholder="أدخل كلمة المرور" />
+        <button type="button" id="togglePassword" class="icon-btn" aria-label="إظهار أو إخفاء كلمة المرور">👁</button>
+      </div>
+
+      <button class="primary full" type="button" onclick="login()">دخول لوحة الإدارة</button>
+      <p id="loginError" class="error"></p>
+      <p class="tiny-note">يمكن تغيير بيانات الدخول من أعلى ملف <strong>script.js</strong>.</p>
+    </div>
+  </section>
+
+  <main id="appPage" class="app hidden">
+    <header class="topbar">
+      <div>
+        <h1>لوحة إدارة النتائج</h1>
+        <p>رفع ملف Excel، حفظ بيانات المدرسة، تخصيص الشعارات والتواقيع والختم، وإدارة رابط الاستعلام العام.</p>
+      </div>
+      <div class="header-actions">
+        <a class="link-btn secondary" href="viewer.html" target="_blank" rel="noopener">فتح رابط الاستعلام</a>
+        <button class="danger" type="button" onclick="logout()">تسجيل الخروج</button>
+      </div>
+    </header>
+
+    <div id="configWarning" class="warning hidden"></div>
+
+    <section class="stats-grid">
+      <div class="stat-card"><span>إجمالي الطلاب</span><strong id="statStudents">0</strong></div>
+      <div class="stat-card"><span>عدد الصفوف</span><strong id="statGrades">0</strong></div>
+      <div class="stat-card"><span>الناجحون</span><strong id="statPass">0</strong></div>
+      <div class="stat-card"><span>الراسبون</span><strong id="statFail">0</strong></div>
+    </section>
+
+    <section class="grid two">
+      <div class="panel accent-panel">
+        <div class="section-title"><h2>بيانات المدرسة والترويسة</h2><span>إعداد رسمي</span></div>
+        <div class="form-grid">
+          <label>اسم المدرسة<input id="schoolName" type="text" placeholder="اسم المدرسة" /></label>
+          <label>المديرية<input id="directorate" type="text" placeholder="المديرية" /></label>
+          <label>المركز التعليمي<input id="educationCenter" type="text" placeholder="المركز التعليمي" /></label>
+          <label>العام الدراسي<input id="academicYear" type="text" placeholder="2024-2025" /></label>
+          <label>اسم مدير المدرسة<input id="principalName" type="text" placeholder="اسم المدير" /></label>
+          <label>رمز المدرسة<input id="schoolCode" type="text" placeholder="رمز المدرسة" /></label>
+        </div>
+        <label>عبارة أعلى الشهادة<textarea id="headerNote" rows="2" placeholder="نتيجة نهاية العام الدراسي"></textarea></label>
+        <button class="primary" type="button" onclick="saveSchoolSettings()">حفظ بيانات المدرسة والملفات</button>
+        <p id="settingsStatus" class="status-line"></p>
+      </div>
+
+      <div class="panel">
+        <div class="section-title"><h2>ملفات الشهادة الرسمية</h2><span>شعارات وتواقيع</span></div>
+        <p class="muted">كل شعار أو توقيع أو ختم يتم رفعه بشكل مستقل، ويظهر في مكانه داخل الشهادة.</p>
+        <div class="asset-grid">
+          <label class="file-box">شعار المدرسة - الجهة اليمنى<input id="rightLogoFile" type="file" accept="image/*" /></label>
+          <label class="file-box">الشعار المقابل - الجهة اليسرى<input id="leftLogoFile" type="file" accept="image/*" /></label>
+          <label class="file-box">توقيع الكنترول<input id="controlSignatureFile" type="file" accept="image/*" /></label>
+          <label class="file-box">توقيع مدير المدرسة<input id="principalSignatureFile" type="file" accept="image/*" /></label>
+          <label class="file-box">ختم الكنترول / المدرسة<input id="controlStampFile" type="file" accept="image/*" /></label>
+        </div>
+        <div id="assetsPreview" class="asset-preview"></div>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="panel">
+        <div class="section-title"><h2>رفع ملف Excel للنتائج</h2><span>يدعم K1 إلى K12</span></div>
+        <label class="dropzone">
+          <input id="excelFile" type="file" accept=".xlsx,.xls" />
+          <span>اضغط هنا لاختيار ملف Excel أو اسحب الملف إلى هذه المنطقة</span>
+        </label>
+        <label class="check-row"><input id="replaceAll" type="checkbox" checked /> حذف النتائج القديمة قبل رفع الملف الجديد</label>
+        <button class="primary" type="button" onclick="uploadExcelResults()">رفع وتحليل ملف Excel</button>
+        <div id="uploadProgress" class="progress-box">جاهز لرفع ملف النتائج.</div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title"><h2>قوالب الشهادة لكل صف</h2><span>اختياري ومتقدم</span></div>
+        <p class="muted">النظام يحتوي على تصميم رسمي جاهز لكل صف. ويمكنك رفع كود HTML خاص لأي صف عند الحاجة.</p>
+        <label>اختر الصف<select id="templateGrade"></select></label>
+        <label>رفع ملف قالب HTML<input id="templateFile" type="file" accept=".html,.txt,.json" /></label>
+        <button class="secondary" type="button" onclick="loadTemplateFileToTextarea()">قراءة ملف القالب</button>
+        <label>كود القالب<textarea id="templateText" rows="7" placeholder="يمكن استخدام: {{student_name}} {{grade_label}} {{subjects_horizontal_table}} {{right_logo}} {{left_logo}} {{control_signature}} {{principal_signature}} {{control_stamp}}"></textarea></label>
+        <button class="primary" type="button" onclick="saveGradeTemplate()">حفظ قالب الصف</button>
+        <p id="templateStatus" class="status-line"></p>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="panel">
+        <div class="section-title"><h2>إدارة البيانات</h2><span>حذف وتحديث</span></div>
+        <div class="actions-stack">
+          <button class="danger" type="button" onclick="deleteAllResults()">حذف جميع نتائج الطلاب</button>
+          <button class="secondary" type="button" onclick="refreshDashboard()">تحديث الإحصائيات</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="section-title"><h2>رابط الاستعلام العام</h2><span>للطلاب وأولياء الأمور</span></div>
+        <p class="muted">أرسل هذا الرابط للطلاب. سيظهر شريط ذهبي متحرك أعلى صفحة الاستعلام.</p>
+        <div class="public-link-box">
+          <input id="publicLink" type="text" readonly />
+          <button class="secondary" type="button" onclick="copyPublicLink()">نسخ</button>
+        </div>
+        <div id="recentUploads" class="mini-list">لا توجد عمليات رفع محفوظة بعد.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

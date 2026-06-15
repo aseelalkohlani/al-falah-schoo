@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>استعلام نتائج الطلاب</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body data-page="viewer">
+  <div class="gold-marquee" aria-label="شريط التواصل">
+    <div class="marquee-track">
+      <span>تصميم المهند عيسى الكحلاني للتواصل/ +967 772 674 795</span>
+      <span>تصميم المهند عيسى الكحلاني للتواصل/ +967 772 674 795</span>
+      <span>تصميم المهند عيسى الكحلاني للتواصل/ +967 772 674 795</span>
+    </div>
+  </div>
+
+  <main class="viewer-shell">
+    <section class="query-card luxury-panel">
+      <div class="brand-mark">نتائج</div>
+      <h1>استعلام نتائج الطلاب</h1>
+      <p class="muted">أدخل اسم الطالب واختر الصف، ويمكن إضافة الرقم المدرسي عند وجود تشابه في الأسماء.</p>
+      <div id="configWarning" class="warning hidden"></div>
+
+      <label>اسم الطالب<input id="queryName" type="text" placeholder="اكتب اسم الطالب رباعيًا" /></label>
+      <label>الصف<select id="queryGrade"></select></label>
+      <label>الرقم المدرسي <small>اختياري</small><input id="querySchoolNumber" type="text" placeholder="يفضل إدخاله عند تشابه الأسماء" /></label>
+      <button class="primary full" type="button" onclick="searchStudentResult()">استعلام النتيجة</button>
+      <p id="queryStatus" class="status-line"></p>
+    </section>
+
+    <section id="multipleMatches" class="panel multiple-matches hidden"></section>
+    <section id="resultTools" class="result-tools hidden">
+      <button class="secondary" type="button" onclick="downloadResultImage()">تحميل النتيجة صورة</button>
+      <button class="primary" type="button" onclick="downloadResultPdf()">تحميل النتيجة PDF</button>
+      <button class="secondary" type="button" onclick="window.print()">طباعة</button>
+    </section>
+    <section id="resultContainer" class="result-container hidden"></section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

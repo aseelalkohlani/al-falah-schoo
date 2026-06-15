@@ -117,13 +117,29 @@ function wireSharedControls() {
 }
 
 function showLogin() {
-  document.getElementById("loginPage")?.classList.remove("hidden");
-  document.getElementById("appPage")?.classList.add("hidden");
+  const loginPage = document.getElementById("loginPage");
+  const appPage = document.getElementById("appPage");
+  if (loginPage) {
+    loginPage.classList.remove("hidden");
+    loginPage.style.display = "";
+  }
+  if (appPage) {
+    appPage.classList.add("hidden");
+    appPage.style.display = "none";
+  }
 }
 
 function showApp() {
-  document.getElementById("loginPage")?.classList.add("hidden");
-  document.getElementById("appPage")?.classList.remove("hidden");
+  const loginPage = document.getElementById("loginPage");
+  const appPage = document.getElementById("appPage");
+  if (loginPage) {
+    loginPage.classList.add("hidden");
+    loginPage.style.display = "none";
+  }
+  if (appPage) {
+    appPage.classList.remove("hidden");
+    appPage.style.display = "";
+  }
   loadSchoolSettings();
   refreshDashboard();
   loadRecentUploads();

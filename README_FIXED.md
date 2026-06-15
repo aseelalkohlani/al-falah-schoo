@@ -81,8 +81,8 @@ anon/public key
 ثم ضعها في أعلى ملف `script.js` بدل:
 
 ```js
-const SUPABASE_URL = "PUT_SUPABASE_URL_HERE";
-const SUPABASE_ANON_KEY = "PUT_SUPABASE_ANON_PUBLIC_KEY_HERE";
+const SUPABASE_URL = "https://gwdtavtwbtaeguxtiztv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_1VLRVbXW7s-x82RS8A-xxg_Fk4SWPV-";
 ```
 
 ### 4) رفع الملفات على Netlify
@@ -145,3 +145,32 @@ README_FIXED.md
 ## ملاحظات أمنية
 
 هذه النسخة عملية وسهلة التشغيل على Netlify + Supabase مباشرة. لأنها تستخدم `anon public key` من المتصفح، فهي مناسبة للتشغيل السريع والعرض العملي. للنسخة الإنتاجية الرسمية يفضّل لاحقًا إضافة Auth أو Backend/API لتقييد عمليات الرفع والحذف.
+
+
+## إصلاح مهم في هذه النسخة
+
+تم إصلاح مشكلة ظهور لوحة الإدارة بشكل عشوائي عند فتح `index.html` من الجوال أو من مدير الملفات.
+
+- عند فتح `index.html` تظهر واجهة تسجيل الدخول فقط.
+- لا تظهر لوحة الإدارة إلا بعد إدخال بيانات الدخول الصحيحة.
+- تم تضمين التنسيق ومنطق التشغيل داخل `index.html` و `viewer.html` حتى لا تتعطل الصفحة إذا لم يحمّل المتصفح ملفات `styles.css` أو `script.js` عند الفتح المحلي.
+- الملفات الخارجية `script.js` و `styles.css` باقية داخل الحزمة للتعديل والاحتفاظ بالنسخة المنظمة.
+
+بيانات الدخول الافتراضية:
+
+```text
+Username: Admin
+Password: 12345
+```
+
+للتشغيل الرسمي على Netlify: ارفع الملفات التالية بعد تنفيذ `setup_supabase.sql` داخل Supabase:
+
+```text
+index.html
+script.js
+viewer.html
+styles.css
+README_FIXED.md
+```
+
+ملاحظة: بسبب أن `index.html` و `viewer.html` يحتويان نسخة مدمجة من الكود، إذا غيّرت بيانات Supabase يدويًا لاحقًا داخل `script.js` فقط، أخبرني لأحدثها لك داخل الصفحات المدمجة أيضًا.
